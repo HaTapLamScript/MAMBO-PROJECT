@@ -18,79 +18,39 @@ The project may be updated, changed, or gain something unexpectedly questionable
 
 ## Scripts
 
-Below is the current list of scripts available in the repository.
-
-### 🌐 Universal
-
-#### 🎵 Youtube Player
-
-**Description:**  
-A YouTube music player for Roblox that allows audio to be fetched from YouTube and played directly in-game.
-
-**Execute:**
-
-```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/HaTapLamScript/MAMBO_PROJECT/main/Universal/Youtube_player.lua"))()
-```
-
----
-
-#### 🎯 Aimlock
-
-**Description:**  
-An aimlock utility for PvP/PvE games.
-
-**Execute:**
-
-```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/HaTapLamScript/MAMBO_PROJECT/main/Universal/Aimlock.lua"))()
-```
-
----
-
-### 🎮 Other Scripts
-
-#### 🥽 R6 FAKE VR — Open Source
-
-**Description:**  
-An **Open Source** project released for learning, experimentation, and customization.
-
-Feel free to download the source, inspect the code, modify it, or turn it into something even more questionable than the original.
-
-**⚠️ Important Note:**
-
-The current logic is still under development and should not be considered fully stable.
-
-The script currently works best with the following game:
-
-https://www.roblox.com/games/123974602339071/Title-Unavailable
-
-**Execute:**
-
-```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/HaTapLamScript/MAMBO_PROJECT/refs/heads/main/R6%20FAKE%20VR%20(Open%20Source).lua"))()
-```
-
----
-
-#### 🏠 DayCornTheSon2 — Daycare the Story 2
-
-**Description:**  
-A script built around one very simple philosophy:
-
-> «Best OP script. EZ win.»
-
-No further explanation required. Use it and find out.
-
-**Execute:**
-
-```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/HaTapLamScript/MAMBO_PROJECT/refs/heads/main/DayCornTheSon2.lua"))()
-```
-
----
+The scripts are organized into separate folders to keep the repository cleaner.
 
 ### ⚡ TSB
+
+#### 🕺 TSB MAMBO DO TECH
+
+**Status:** `New`
+
+**Description:**  
+A new script made specifically for **The Strongest Battlegrounds**.
+
+The script comes with its own **configuration system**, allowing several parameters to be customized before execution.
+
+**Config + Execute:**
+
+```lua
+-- [MAMBO PROJECT] TSB MAMBO DO TECH [CONFIG]
+_G.MAMBO_DOTECH_CONFIG = {
+    y1 = -3.67,
+    y2 = -3.67,
+    delay = 0.7,
+    dashDelay = 0.45,
+    direction = "Up", -- Up or Down
+    cooldown = 4 -- 4 or 0
+}
+
+-- [MAMBO PROJECT] TSB MAMBO DO TECH [MAIN]
+loadstring(game:HttpGet("https://raw.githubusercontent.com/HaTapLamScript/MAMBO-PROJECT/refs/heads/main/Script/TSB/TsbDotech.lua"))()
+```
+
+> **Config first. Execute second.**
+
+---
 
 #### ⚡ TSB Antilag! — Remake
 
@@ -112,38 +72,74 @@ In short:
 **Execute:**
 
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/HaTapLamScript/MAMBO_PROJECT/refs/heads/main/TSB/Antilag.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/HaTapLamScript/MAMBO-PROJECT/refs/heads/main/Script/TSB/Antilag.lua"))()
 ```
 
 ---
 
-#### 🕺 TSB MAMBO DO TECH
+### 🌐 Universal
 
-**Status:** `New`
+#### 🎯 Aimlock
+
+**Status:** `Updated`
 
 **Description:**  
-A new script made specifically for **The Strongest Battlegrounds**.
+An aimlock utility designed for multiple games.
 
-TSB MAMBO DO TECH comes with its own **configuration system**, allowing several parameters to be customized before execution.
-
-**Config + Execute:**
+**Execute:**
 
 ```lua
--- [MAMBO PROJECT] TSB MAMBO DO TECH [CONFIG]
-_G.MAMBO_DOTECH_CONFIG = {
-    y1 = -3.67,
-    y2 = -3.67,
-    delay = 0.7,
-    dashDelay = 0.45,
-    direction = "Up", -- Up or Down
-    cooldown = 4 -- 4 or 0
-}
-
--- [MAMBO PROJECT] TSB MAMBO DO TECH [MAIN]
-loadstring(game:HttpGet("https://raw.githubusercontent.com/HaTapLamScript/MAMBO_PROJECT/refs/heads/main/TSB/TsbDotech.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/HaTapLamScript/MAMBO-PROJECT/refs/heads/main/Script/UNIVERSAL/Aimlock.lua"))()
 ```
 
-> **Config first. Execute second. Don't do it backwards and then ask why it doesn't work.**
+---
+
+#### 🎵 Youtube Player
+
+**Status:** `Updated`
+
+**Description:**  
+A YouTube music player for Roblox.
+
+**Execute:**
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/HaTapLamScript/MAMBO-PROJECT/refs/heads/main/Script/UNIVERSAL/Youtube_player.lua"))()
+```
+
+---
+
+### 🎮 Others
+
+#### 🥽 R6 FAKE VR — Open Source
+
+**Description:**  
+An **Open Source** project released for learning, experimentation, and customization.
+
+The current logic is still under development and should not be considered fully stable.
+
+**Execute:**
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/HaTapLamScript/MAMBO-PROJECT/refs/heads/main/Script/OTHERS/R6%20FAKE%20VR%20(Open%20Source).lua"))()
+```
+
+---
+
+#### 🏠 DayCornTheSon2 — Daycare the Story 2
+
+**Description:**  
+A script built around one very simple philosophy:
+
+> «Best OP script. EZ win.»
+
+No further explanation required. Use it and find out.
+
+**Execute:**
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/HaTapLamScript/MAMBO-PROJECT/refs/heads/main/Script/OTHERS/DayCornTheSon2.lua"))()
+```
 
 ---
 
@@ -172,4 +168,4 @@ Either way, welcome to **MAMBO PROJECT**.
 
 **Happy scripting.**
 
-— *A nobody with some free time.* 
+— *A nobody with some free time.*
