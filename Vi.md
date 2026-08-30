@@ -18,79 +18,39 @@ Dự án có thể được cập nhật, thay đổi hoặc xuất hiện thêm
 
 ## Scripts
 
-Dưới đây là danh sách các script hiện có trong repository.
-
-### 🌐 Universal
-
-#### 🎵 Youtube Player
-
-**Mô tả:**  
-Trình phát nhạc YouTube dành cho Roblox, cho phép tải và phát audio từ YouTube trực tiếp trong game.
-
-**Execute:**
-
-```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/HaTapLamScript/MAMBO_PROJECT/main/Universal/Youtube_player.lua"))()
-```
-
----
-
-#### 🎯 Aimlock
-
-**Mô tả:**  
-Script hỗ trợ aimlock dành cho các tựa game PvP/PvE.
-
-**Execute:**
-
-```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/HaTapLamScript/MAMBO_PROJECT/main/Universal/Aimlock.lua"))()
-```
-
----
-
-### 🎮 Other Scripts
-
-#### 🥽 R6 FAKE VR — Open Source
-
-**Mô tả:**  
-Một project **Open Source**, được công khai nhằm mục đích nghiên cứu, học tập và tùy chỉnh.
-
-Bạn hoàn toàn có thể tải source về, đọc code, chỉnh sửa hoặc biến nó thành một thứ gì đó còn kỳ quặc hơn bản gốc.
-
-**⚠️ Lưu ý:**
-
-Logic hiện tại vẫn đang trong quá trình hoàn thiện và chưa được xem là hoàn toàn ổn định.
-
-Script hoạt động tốt nhất trên tựa game sau:
-
-https://www.roblox.com/games/123974602339071/Title-Unavailable
-
-**Execute:**
-
-```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/HaTapLamScript/MAMBO_PROJECT/refs/heads/main/R6%20FAKE%20VR%20(Open%20Source).lua"))()
-```
-
----
-
-#### 🏠 DayCornTheSon2 — Daycare the Story 2
-
-**Mô tả:**  
-Một script được xây dựng với triết lý rất đơn giản:
-
-> «Best OP script. EZ win.»
-
-Không cần giải thích quá nhiều. Cứ dùng rồi tự hiểu.
-
-**Execute:**
-
-```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/HaTapLamScript/MAMBO_PROJECT/refs/heads/main/DayCornTheSon2.lua"))()
-```
-
----
+Các script hiện được sắp xếp theo từng thư mục để repository gọn gàng hơn.
 
 ### ⚡ TSB
+
+#### 🕺 TSB MAMBO DO TECH
+
+**Trạng thái:** `New`
+
+**Mô tả:**  
+Một script mới dành riêng cho **The Strongest Battlegrounds**.
+
+Script có hệ thống **config riêng**, cho phép tùy chỉnh một số thông số trước khi chạy.
+
+**Config + Execute:**
+
+```lua
+-- [MAMBO PROJECT] TSB MAMBO DO TECH [CONFIG]
+_G.MAMBO_DOTECH_CONFIG = {
+    y1 = -3.67,
+    y2 = -3.67,
+    delay = 0.7,
+    dashDelay = 0.45,
+    direction = "Up", -- Up or Down
+    cooldown = 4 -- 4 or 0
+}
+
+-- [MAMBO PROJECT] TSB MAMBO DO TECH [MAIN]
+loadstring(game:HttpGet("https://raw.githubusercontent.com/HaTapLamScript/MAMBO-PROJECT/refs/heads/main/Script/TSB/TsbDotech.lua"))()
+```
+
+> **Config trước. Execute sau.**
+
+---
 
 #### ⚡ TSB Antilag! — Remake
 
@@ -112,38 +72,74 @@ Nói ngắn gọn:
 **Execute:**
 
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/HaTapLamScript/MAMBO_PROJECT/refs/heads/main/TSB/Antilag.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/HaTapLamScript/MAMBO-PROJECT/refs/heads/main/Script/TSB/Antilag.lua"))()
 ```
 
 ---
 
-#### 🕺 TSB MAMBO DO TECH
+### 🌐 Universal
 
-**Trạng thái:** `New`
+#### 🎯 Aimlock
+
+**Trạng thái:** `Updated`
 
 **Mô tả:**  
-Một script mới dành riêng cho **The Strongest Battlegrounds**.
+Script hỗ trợ aimlock dành cho nhiều tựa game.
 
-TSB MAMBO DO TECH có hệ thống **config riêng**, cho phép tùy chỉnh một số thông số trước khi chạy script.
-
-**Config + Execute:**
+**Execute:**
 
 ```lua
--- [MAMBO PROJECT] TSB MAMBO DO TECH [CONFIG]
-_G.MAMBO_DOTECH_CONFIG = {
-    y1 = -3.67,
-    y2 = -3.67,
-    delay = 0.7,
-    dashDelay = 0.45,
-    direction = "Up", -- Up or Down
-    cooldown = 4 -- 4 or 0
-}
-
--- [MAMBO PROJECT] TSB MAMBO DO TECH [MAIN]
-loadstring(game:HttpGet("https://raw.githubusercontent.com/HaTapLamScript/MAMBO_PROJECT/refs/heads/main/TSB/TsbDotech.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/HaTapLamScript/MAMBO-PROJECT/refs/heads/main/Script/UNIVERSAL/Aimlock.lua"))()
 ```
 
-> **Config trước. Execute sau. Đừng đảo thứ tự rồi hỏi tại sao nó không chạy.**
+---
+
+#### 🎵 Youtube Player
+
+**Trạng thái:** `Updated`
+
+**Mô tả:**  
+Trình phát nhạc YouTube dành cho Roblox.
+
+**Execute:**
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/HaTapLamScript/MAMBO-PROJECT/refs/heads/main/Script/UNIVERSAL/Youtube_player.lua"))()
+```
+
+---
+
+### 🎮 Others
+
+#### 🥽 R6 FAKE VR — Open Source
+
+**Mô tả:**  
+Một project **Open Source**, được công khai nhằm mục đích nghiên cứu, học tập và tùy chỉnh.
+
+Logic hiện tại vẫn đang trong quá trình hoàn thiện và chưa được xem là hoàn toàn ổn định.
+
+**Execute:**
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/HaTapLamScript/MAMBO-PROJECT/refs/heads/main/Script/OTHERS/R6%20FAKE%20VR%20(Open%20Source).lua"))()
+```
+
+---
+
+#### 🏠 DayCornTheSon2 — Daycare the Story 2
+
+**Mô tả:**  
+Một script được xây dựng với triết lý rất đơn giản:
+
+> «Best OP script. EZ win.»
+
+Không cần giải thích quá nhiều. Cứ dùng rồi tự hiểu.
+
+**Execute:**
+
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/HaTapLamScript/MAMBO-PROJECT/refs/heads/main/Script/OTHERS/DayCornTheSon2.lua"))()
+```
 
 ---
 
@@ -172,4 +168,4 @@ Dù thế nào đi nữa, chào mừng đến với **MAMBO PROJECT**.
 
 **Happy scripting.**
 
-— *Một kẻ vô danh với chút thời gian rảnh.* 
+— *Một kẻ vô danh với chút thời gian rảnh.*
