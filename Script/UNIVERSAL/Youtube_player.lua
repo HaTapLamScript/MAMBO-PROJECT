@@ -1,0 +1,1 @@
+do local player=game.Players.LocalPlayer;local camera=workspace.CurrentCamera;local tweenService=game:GetService("TweenService");local userInput=game:GetService("UserInputService");local runService -- (original content moved into Universal folder)
