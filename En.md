@@ -29,22 +29,12 @@ The scripts are organized into separate folders to keep the repository cleaner.
 **Description:**  
 A new script made specifically for **The Strongest Battlegrounds**.
 
-The script comes with its own **configuration system**, allowing several parameters to be customized before execution.
+The script comes with its own **configuration system**, allowing several parameters to be customized after execution.
 
 **Config + Execute:**
 
 ```lua
--- [MAMBO PROJECT] TSB MAMBO DO TECH [CONFIG]
-_G.MAMBO_DOTECH_CONFIG = {
-    y1 = -3.67,
-    y2 = -3.67,
-    delay = 0.7,
-    dashDelay = 0.45,
-    direction = "Up", -- Up or Down
-    cooldown = 4 -- 4 or 0
-}
-
--- [MAMBO PROJECT] TSB MAMBO DO TECH [MAIN]
+-- [MAMBO PROJECT] TSB MAMBODOTECH
 loadstring(game:HttpGet("https://raw.githubusercontent.com/HaTapLamScript/MAMBO-PROJECT/refs/heads/main/Script/TSB/TsbDotech.lua"))()
 ```
 
