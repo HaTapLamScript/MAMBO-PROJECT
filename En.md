@@ -156,4 +156,4 @@ Either way, welcome to **MAMBO PROJECT**.
 
 **Happy scripting.**
 
-— *A nobody with some free time.*
+— *A nobody with some free time lol.*
