@@ -38,8 +38,6 @@ Script có hệ thống **config riêng**, cho phép tùy chỉnh một số th�
 loadstring(game:HttpGet("https://raw.githubusercontent.com/HaTapLamScript/MAMBO-PROJECT/refs/heads/main/Script/TSB/TsbDotech.lua"))()
 ```
 
-> **Config trước. Execute sau.**
-
 ---
 
 #### ⚡ TSB Antilag! — Remake
