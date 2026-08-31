@@ -31,7 +31,7 @@ Một script mới dành riêng cho **The Strongest Battlegrounds**.
 
 Script có hệ thống **config riêng**, cho phép tùy chỉnh một số thông số sau khi chạy.
 
-**Config + Execute:**
+**Execute:**
 
 ```lua
 -- [MAMBO PROJECT] TSB MAMBODOTECH
