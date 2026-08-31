@@ -31,14 +31,12 @@ A new script made specifically for **The Strongest Battlegrounds**.
 
 The script comes with its own **configuration system**, allowing several parameters to be customized after execution.
 
-**Config + Execute:**
+**Execute:**
 
 ```lua
 -- [MAMBO PROJECT] TSB MAMBODOTECH
 loadstring(game:HttpGet("https://raw.githubusercontent.com/HaTapLamScript/MAMBO-PROJECT/refs/heads/main/Script/TSB/TsbDotech.lua"))()
 ```
-
-> **Config first. Execute second.**
 
 ---
 
