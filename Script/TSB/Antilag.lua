@@ -37,6 +37,7 @@ if not _G.MAMBO_ANTILAG_LOADED then
     local CoreGui = game:GetService("CoreGui")
     local TweenService = game:GetService("TweenService")
     local HttpService = game:GetService("HttpService")
+    local Debris = game:GetService("Debris")
     pcall(function() if makefolder then makefolder("MAMBO_PROJECT") end end)
     Lighting.GlobalShadows = false
     Lighting.EnvironmentDiffuseScale = 0
@@ -84,8 +85,7 @@ if not _G.MAMBO_ANTILAG_LOADED then
     local qTail = 0
     local QueueSet = {}
     local currentFps = 60
-    local lastCleanupTime = 0
-    local cleanupInterval = 3
+    local V4Size = Vector3.new(4, 4, 4)
     local function activateCriticalMode()
         criticalMode = true
         criticalEnd = clk() + 6
@@ -96,8 +96,9 @@ if not _G.MAMBO_ANTILAG_LOADED then
             activateCriticalMode()
             return
         end
-        for _, child in ipairs(obj:GetChildren()) do
-            if CRITICAL_SKILLS[child.Name] then
+        local kids = obj:GetChildren()
+        for i = 1, #kids do
+            if CRITICAL_SKILLS[kids[i].Name] then
                 activateCriticalMode()
                 return
             end
@@ -116,7 +117,7 @@ if not _G.MAMBO_ANTILAG_LOADED then
         local cClass = child.ClassName
         if EffectClasses[cClass] then
             pcall(function() child.Enabled = false end)
-        elseif (cClass == "Part" or cClass == "MeshPart") and not WhitelistParts[child.Name] and not (child.Name == "Part" and child.Size == Vector3.new(4,4,4)) then
+        elseif (cClass == "Part" or cClass == "MeshPart") and not WhitelistParts[child.Name] and not (child.Name == "Part" and child.Size == V4Size) then
             pcall(function()
                 child.Transparency = 1
                 child.CastShadow = false
@@ -128,7 +129,8 @@ if not _G.MAMBO_ANTILAG_LOADED then
         if not child or QueueSet[child] then return end
         QueueSet[child] = true
         InstantDisable(child)
-        for _, v in ipairs(child:GetChildren()) do InstantDisable(v) end
+        local kids = child:GetChildren()
+        for i = 1, #kids do InstantDisable(kids[i]) end
         qTail = qTail + 1
         queue[qTail] = child
     end
@@ -137,9 +139,10 @@ if not _G.MAMBO_ANTILAG_LOADED then
         if qHead > qTail then qHead = 1; qTail = 0; return end
         if criticalMode then return end
         local startTime = clk()
-        local timeLimit = 0.001
-        if currentFps >= 50 then timeLimit = 0.003
-        elseif currentFps >= 30 then timeLimit = 0.002 end
+        local timeLimit = 0.002
+        if currentFps >= 55 then timeLimit = 0.004
+        elseif currentFps >= 40 then timeLimit = 0.003
+        elseif currentFps >= 25 then timeLimit = 0.002 end
         local processed = 0
         while qHead <= qTail do
             local child = queue[qHead]
@@ -150,7 +153,7 @@ if not _G.MAMBO_ANTILAG_LOADED then
                 if child.Parent then
                     local cClass = child.ClassName
                     if cClass == "Part" or cClass == "MeshPart" then
-                        if not WhitelistParts[child.Name] and not (child.Name == "Part" and child.Size == Vector3.new(4,4,4)) then
+                        if not WhitelistParts[child.Name] and not (child.Name == "Part" and child.Size == V4Size) then
                             pcall(function() child:Destroy() end)
                         end
                     elseif cClass == "Model" then
@@ -163,7 +166,7 @@ if not _G.MAMBO_ANTILAG_LOADED then
                 end
             end
             processed = processed + 1
-            if clk() - startTime >= timeLimit or processed >= 10 then break end
+            if clk() - startTime >= timeLimit or processed >= 20 then break end
         end
     end)
     local Thing = Workspace:FindFirstChild("Thrown")
@@ -176,24 +179,20 @@ if not _G.MAMBO_ANTILAG_LOADED then
     Thing.ChildAdded:Connect(QueueGarbage)
     task.spawn(function()
         while true do
-            task.wait(cleanupInterval)
-            if currentFps > 25 and not criticalMode then
-                local now = clk()
-                if now - lastCleanupTime >= cleanupInterval then
-                    lastCleanupTime = now
-                    pcall(function()
-                        local items = Workspace:GetDescendants()
-                        local count = 0
-                        for i = 1, #items do
-                            local v = items[i]
-                            if v and EffectClasses[v.ClassName] then
-                                pcall(function() v.Enabled = false; v:Destroy() end)
-                            end
-                            count = count + 1
-                            if count % 200 == 0 then RunService.Heartbeat:Wait() end
+            task.wait(10)
+            if currentFps > 40 and not criticalMode then
+                pcall(function()
+                    local items = Workspace:GetDescendants()
+                    local count = 0
+                    for i = 1, #items do
+                        local v = items[i]
+                        if v and EffectClasses[v.ClassName] then
+                            pcall(function() v.Enabled = false; v:Destroy() end)
                         end
-                    end)
-                end
+                        count = count + 1
+                        if count % 300 == 0 then RunService.Heartbeat:Wait() end
+                    end
+                end)
             end
         end
     end)
@@ -217,6 +216,8 @@ if not _G.MAMBO_ANTILAG_LOADED then
     fpsLabel.Parent = fpsGui
     local fpsCounter = 0
     local lastFpsUpdate = clk()
+    local perfStats = Stats.PerformanceStats
+    local serverStats = Stats.Network.ServerStatsItem
     RunService.RenderStepped:Connect(function()
         fpsCounter = fpsCounter + 1
         local now = clk()
@@ -225,8 +226,8 @@ if not _G.MAMBO_ANTILAG_LOADED then
             fpsCounter = 0
             lastFpsUpdate = now
             local ping = 0
-            pcall(function() ping = Stats.Network.ServerStatsItem["Data Ping"]:GetValue() end)
-            if ping == 0 then pcall(function() ping = Stats.PerformanceStats.Ping:GetValue() end) end
+            pcall(function() ping = serverStats["Data Ping"]:GetValue() end)
+            if ping == 0 then pcall(function() ping = perfStats.Ping:GetValue() end) end
             fpsLabel.Text = "<i>FPS: " .. tostring(currentFps) .. "  /  Ping: " .. tostring(mround(ping)) .. "ms</i>"
         end
     end)
@@ -278,16 +279,8 @@ if not _G.MAMBO_FFLAGS_APPLIED then
             DFIntClientInputLatency = "0",
             DFIntClientInputBuffer = "0",
             DFIntClientInputPrediction = "100",
-            DFIntClientPacketMaxDelayMs = "1",
             DFIntMaxWaitTimeBeforeForcePacketProcessMS = "1",
-            DFIntClientPacketMinMicroseconds = "0",
-            DFIntDataSenderRate = "99999",
-            DFIntDataSenderMaxBandwidthBps = "2147483647",
-            DFIntS2PhysicsSenderRate = "99999",
-            DFIntPhysicsSenderMaxBandwidthBps = "2147483647",
-            DFIntClientPhysicsSimulationRate = "1000",
-            DFIntClientPhysicsTickRate = "240",
-            DFFlagPhysicsSkipNonRealTimeHumanoidForceCalc2 = "True",
+            DFIntMaxFrameBufferSize = "4",
             DFIntTaskSchedulerTargetFps = "9999",
             FIntTaskSchedulerAutoThreadLimit = "8",
             DFFlagTextureQualityOverrideEnabled = "True",
@@ -297,7 +290,34 @@ if not _G.MAMBO_FFLAGS_APPLIED then
             FFlagRenderAllocateShadowMapResourcesOnDemand = "True",
             FFlagRenderGpuTextureCompressor = "True",
             DFFlagDisableDPIScale = "True",
-            FFlagDebugGraphicsPreferD3D11 = "True"
+            FFlagDebugGraphicsPreferD3D11 = "True",
+            DFFlagDebugPauseVoxelizer = "True",
+            FIntRenderLocalLightUpdatesMax = "1",
+            FIntRenderLocalLightUpdatesMin = "1",
+            DFIntNumAssetsMaxToPreload = "9999999",
+            DFIntAssetPreloading = "9999999",
+            DFIntS2PhysicsSenderRate = "60",
+            DFIntDataSenderRate = "1000",
+            DFIntDataSenderMaxBandwidthBpsMultiplier = "1000",
+            DFIntPhysicsSenderMaxBandwidthBpsScaling = "240",
+            DFFlagFixInterpolationMovementCallbacks = "True",
+            DFFlagUserPhysicsSimulationRate = "True",
+            DFFlagFixNetworkPhysicsInterpolation = "True",
+            DFIntInterpolationMinAssemblyCount = "1",
+            FIntPhysicsStepsPerSecond = "240",
+            FFlagDebugDisplayFPS = "True",
+            DFIntLargePacketQueueSizeCutoffMB = "150",
+            DFIntMaxProcessPacketsJobScaling = "20000",
+            DFIntMaxProcessPacketsStepsAccumulated = "0",
+            FFlagOptimizeNetwork = "True",
+            FFlagOptimizeNetworkRouting = "True",
+            FFlagOptimizeNetworkTransport = "True",
+            FIntRakNetResendBufferArrayLength = "128",
+            DFIntRakNetMtuValue1InBytes = "1480",
+            DFIntRakNetMtuValue2InBytes = "1480",
+            DFIntRakNetMtuValue3InBytes = "1480",
+            DFIntRaknetBandwidthPingSendEveryXSeconds = "1",
+            FFlagEnableRealTimePingMeasurement = "True"
         }
         task.spawn(function()
             for flag, value in pairs(flags) do setFlag(flag, value) end
