@@ -28,8 +28,6 @@ if not _G.MAMBO_ANTILAG_LOADED then
     _G.MAMBO_ANTILAG_LOADED = true
     local clk = os.clock
     local mround = math.round
-    local mfloor = math.floor
-    local mmax = math.max
     local Players = game:GetService("Players")
     local RunService = game:GetService("RunService")
     local Lighting = game:GetService("Lighting")
@@ -39,7 +37,6 @@ if not _G.MAMBO_ANTILAG_LOADED then
     local CoreGui = game:GetService("CoreGui")
     local TweenService = game:GetService("TweenService")
     local HttpService = game:GetService("HttpService")
-    local Debris = game:GetService("Debris")
     pcall(function() if makefolder then makefolder("MAMBO_PROJECT") end end)
     Lighting.GlobalShadows = false
     Lighting.EnvironmentDiffuseScale = 0
@@ -87,36 +84,8 @@ if not _G.MAMBO_ANTILAG_LOADED then
     local qTail = 0
     local QueueSet = {}
     local currentFps = 60
-    local V4Size = Vector3.new(4, 4, 4)
-
-    local overloadFactor = 1.0
-    local lastMode = 0
-    local modeChangeCooldown = 0
-
-    local function updateOverloadMode()
-        local now = clk()
-        if now - modeChangeCooldown < 1.5 then return end
-        local newMode
-        if currentFps >= 45 then
-            newMode = 0
-        elseif currentFps >= 25 then
-            newMode = 1
-        else
-            newMode = 2
-        end
-        if newMode ~= lastMode then
-            lastMode = newMode
-            modeChangeCooldown = now
-            if newMode == 0 then
-                overloadFactor = 1.0
-            elseif newMode == 1 then
-                overloadFactor = 0.75
-            else
-                overloadFactor = 0.40
-            end
-        end
-    end
-
+    local lastCleanupTime = 0
+    local cleanupInterval = 3
     local function activateCriticalMode()
         criticalMode = true
         criticalEnd = clk() + 6
@@ -127,9 +96,8 @@ if not _G.MAMBO_ANTILAG_LOADED then
             activateCriticalMode()
             return
         end
-        local kids = obj:GetChildren()
-        for i = 1, #kids do
-            if CRITICAL_SKILLS[kids[i].Name] then
+        for _, child in ipairs(obj:GetChildren()) do
+            if CRITICAL_SKILLS[child.Name] then
                 activateCriticalMode()
                 return
             end
@@ -148,7 +116,7 @@ if not _G.MAMBO_ANTILAG_LOADED then
         local cClass = child.ClassName
         if EffectClasses[cClass] then
             pcall(function() child.Enabled = false end)
-        elseif (cClass == "Part" or cClass == "MeshPart") and not WhitelistParts[child.Name] and not (child.Name == "Part" and child.Size == V4Size) then
+        elseif (cClass == "Part" or cClass == "MeshPart") and not WhitelistParts[child.Name] and not (child.Name == "Part" and child.Size == Vector3.new(4,4,4)) then
             pcall(function()
                 child.Transparency = 1
                 child.CastShadow = false
@@ -160,39 +128,18 @@ if not _G.MAMBO_ANTILAG_LOADED then
         if not child or QueueSet[child] then return end
         QueueSet[child] = true
         InstantDisable(child)
-        local kids = child:GetChildren()
-        for i = 1, #kids do InstantDisable(kids[i]) end
+        for _, v in ipairs(child:GetChildren()) do InstantDisable(v) end
         qTail = qTail + 1
         queue[qTail] = child
     end
     RunService.Heartbeat:Connect(function()
         if clk() >= criticalEnd then criticalMode = false end
-        updateOverloadMode()
         if qHead > qTail then qHead = 1; qTail = 0; return end
         if criticalMode then return end
-
         local startTime = clk()
-
-        local baseLimit = 0.003375
-        local baseCap = 20
-
-        if currentFps >= 55 then
-            baseLimit = 0.003375
-            baseCap = 20
-        elseif currentFps >= 40 then
-            baseLimit = 0.00253125
-            baseCap = 16
-        elseif currentFps >= 25 then
-            baseLimit = 0.0016875
-            baseCap = 12
-        else
-            baseLimit = 0.00084375
-            baseCap = 7
-        end
-
-        local timeLimit = baseLimit * overloadFactor
-        local processedCap = mmax(3, mfloor(baseCap * overloadFactor))
-
+        local timeLimit = 0.001
+        if currentFps >= 50 then timeLimit = 0.003
+        elseif currentFps >= 30 then timeLimit = 0.002 end
         local processed = 0
         while qHead <= qTail do
             local child = queue[qHead]
@@ -203,7 +150,7 @@ if not _G.MAMBO_ANTILAG_LOADED then
                 if child.Parent then
                     local cClass = child.ClassName
                     if cClass == "Part" or cClass == "MeshPart" then
-                        if not WhitelistParts[child.Name] and not (child.Name == "Part" and child.Size == V4Size) then
+                        if not WhitelistParts[child.Name] and not (child.Name == "Part" and child.Size == Vector3.new(4,4,4)) then
                             pcall(function() child:Destroy() end)
                         end
                     elseif cClass == "Model" then
@@ -216,7 +163,7 @@ if not _G.MAMBO_ANTILAG_LOADED then
                 end
             end
             processed = processed + 1
-            if clk() - startTime >= timeLimit or processed >= processedCap then break end
+            if clk() - startTime >= timeLimit or processed >= 10 then break end
         end
     end)
     local Thing = Workspace:FindFirstChild("Thrown")
@@ -229,20 +176,24 @@ if not _G.MAMBO_ANTILAG_LOADED then
     Thing.ChildAdded:Connect(QueueGarbage)
     task.spawn(function()
         while true do
-            task.wait(10)
-            if currentFps > 40 and not criticalMode then
-                pcall(function()
-                    local items = Workspace:GetDescendants()
-                    local count = 0
-                    for i = 1, #items do
-                        local v = items[i]
-                        if v and EffectClasses[v.ClassName] then
-                            pcall(function() v.Enabled = false; v:Destroy() end)
+            task.wait(cleanupInterval)
+            if currentFps > 25 and not criticalMode then
+                local now = clk()
+                if now - lastCleanupTime >= cleanupInterval then
+                    lastCleanupTime = now
+                    pcall(function()
+                        local items = Workspace:GetDescendants()
+                        local count = 0
+                        for i = 1, #items do
+                            local v = items[i]
+                            if v and EffectClasses[v.ClassName] then
+                                pcall(function() v.Enabled = false; v:Destroy() end)
+                            end
+                            count = count + 1
+                            if count % 200 == 0 then RunService.Heartbeat:Wait() end
                         end
-                        count = count + 1
-                        if count % 300 == 0 then RunService.Heartbeat:Wait() end
-                    end
-                end)
+                    end)
+                end
             end
         end
     end)
@@ -266,8 +217,6 @@ if not _G.MAMBO_ANTILAG_LOADED then
     fpsLabel.Parent = fpsGui
     local fpsCounter = 0
     local lastFpsUpdate = clk()
-    local perfStats = Stats.PerformanceStats
-    local serverStats = Stats.Network.ServerStatsItem
     RunService.RenderStepped:Connect(function()
         fpsCounter = fpsCounter + 1
         local now = clk()
@@ -276,9 +225,21 @@ if not _G.MAMBO_ANTILAG_LOADED then
             fpsCounter = 0
             lastFpsUpdate = now
             local ping = 0
-            pcall(function() ping = serverStats["Data Ping"]:GetValue() end)
-            if ping == 0 then pcall(function() ping = perfStats.Ping:GetValue() end) end
+            pcall(function() ping = Stats.Network.ServerStatsItem["Data Ping"]:GetValue() end)
+            if ping == 0 then pcall(function() ping = Stats.PerformanceStats.Ping:GetValue() end) end
             fpsLabel.Text = "<i>FPS: " .. tostring(currentFps) .. "  /  Ping: " .. tostring(mround(ping)) .. "ms</i>"
+        end
+    end)
+    local logoImg = nil
+    pcall(function()
+        local folder = "MAMBO_PROJECT"
+        local path = folder .. "/MAMBO_logo.png"
+        if not isfolder(folder) then makefolder(folder) end
+        if not isfile(path) then
+            writefile(path, game:HttpGet("https://raw.githubusercontent.com/HaTapLamScript/MAMBO-PROJECT/main/Script/MAMBO_logo.png"))
+        end
+        if getcustomasset then
+            logoImg = getcustomasset(path)
         end
     end)
     pcall(function()
@@ -292,152 +253,108 @@ end
 if not _G.MAMBO_FFLAGS_APPLIED then
     local CoreGui = game:GetService("CoreGui")
     local StarterGui = game:GetService("StarterGui")
-    local RunService = game:GetService("RunService")
+    local logoImg = nil
+    pcall(function()
+        local folder = "MAMBO_PROJECT"
+        local path = folder .. "/MAMBO_logo.png"
+        if getcustomasset then logoImg = getcustomasset(path) end
+    end)
     local oldDialog = CoreGui:FindFirstChild("MamboFFlagsDialog")
     if oldDialog then oldDialog:Destroy() end
     local gui = Instance.new("ScreenGui")
     gui.Name = "MamboFFlagsDialog"
     gui.ResetOnSpawn = false
     gui.Parent = CoreGui
-
-    local flagtables = {
-        ["DFIntTaskSchedulerTargetFps"] = "9999",
-        ["FIntTaskSchedulerAutoThreadLimit"] = "6",
-        ["FIntTaskSchedulerAsyncTasksMinimumThreadCount"] = "2",
-        ["FIntTaskSchedulerMaxNumOfJobs"] = "86",
-        ["FIntTaskSchedulerThreadMin"] = "1",
-        ["DFFlagBrowserTrackerIdTelemetryEnabled"] = "False",
-        ["DFFlagPreloadAsyncSupportTexturePack"] = "True",
-        ["DFFlagTextureQualityOverrideEnabled"] = "True",
-        ["DFFlagVideoCaptureServiceEnabled"] = "False",
-        ["DFFlagSampleAndRefreshRakPing"] = "True",
-        ["DFFlagRakNetUseSlidingWindow4"] = "True",
-        ["DFFlagCoreScriptTelemetry2"] = "False",
-        ["DFFlagEnableSoundPreloading"] = "True",
-        ["DFFlagOptimizePartsInPart"] = "True",
-        ["DFFlagDisableDPIScale"] = "True",
-        ["DFFlagDebugPerfMode"] = "True",
-        ["DFIntRaknetBandwidthInfluxHundredthsPercentageV2"] = "10000",
-        ["DFIntRakNetClockDriftAdjustmentPerPingMillisecond"] = "100",
-        ["DFIntRaknetBandwidthPingSendEveryXSeconds"] = "1",
-        ["DFIntRakNetNakResendDelayRttPercent"] = "50",
-        ["DFIntRakNetNakResendDelayMsMax"] = "100",
-        ["DFIntRakNetNakResendDelayMs"] = "10",
-        ["DFIntRakNetResendRttMultiple"] = "1",
-        ["DFIntRakNetSelectTimeoutMs"] = "1",
-        ["DFIntRakNetLoopMs"] = "1",
-        ["DFIntRakNetMinAckGrowthPercent"] = "0",
-        ["DFIntRakNetMtuValue1InBytes"] = "1280",
-        ["DFIntRakNetMtuValue2InBytes"] = "1240",
-        ["DFIntRakNetMtuValue3InBytes"] = "1200",
-        ["DFIntConnectionMTUSize"] = "1260",
-        ["DFIntMaxReceiveToDeserializeLatencyMilliseconds"] = "15",
-        ["DFIntNetworkInDeserializeLimitGameplayMsClient"] = "6",
-        ["DFIntNetworkInProcessLimitGameplayMsClient"] = "6",
-        ["DFIntClientPacketHealthyAllocationPercent"] = "20",
-        ["DFIntClientPacketMaxFrameMicroseconds"] = "200",
-        ["DFIntClientPacketExcessMicroseconds"] = "1000",
-        ["DFIntClientPacketMinMicroseconds"] = "1",
-        ["DFIntClientPacketMaxDelayMs"] = "11",
-        ["DFIntMaxWaitTimeBeforeForcePacketProcessMS"] = "1.5",
-        ["DFIntMaxProcessPacketsStepsPerCyclic"] = "5000",
-        ["DFIntMaxProcessPacketsStepsAccumulated"] = "0",
-        ["DFIntMaxProcessPacketsJobScaling"] = "10000",
-        ["DFIntLargePacketQueueSizeCutoffMB"] = "1000",
-        ["DFIntDataSenderRate"] = "1000",
-        ["DFIntDataSenderMaxBandwidthBps"] = "2147483647",
-        ["DFIntDataSenderMaxJoinBandwidthBps"] = "2147483647",
-        ["DFIntS2PhysicsSenderRate"] = "1000",
-        ["DFIntS2NumPhysicsPacketsPerStep"] = "100",
-        ["DFIntPhysicsSenderMaxBandwidthBps"] = "2147483647",
-        ["DFIntPhysicsSenderMaxBandwidthBpsScaling"] = "1000",
-        ["FIntPGSAngularDampingPermilPersecond"] = "0",
-        ["DFFlagPhysicsSkipNonRealTimeHumanoidForceCalc2"] = "True",
-        ["DFIntSignalRHubConnectionHeartbeatTimerRateMs"] = "1000",
-        ["DFIntSignalRHubConnectionBaseRetryTimeMs"] = "100",
-        ["DFIntSignalRCoreKeepAlivePingPeriodMs"] = "250",
-        ["DFIntSignalRCoreServerTimeoutMs"] = "11100",
-        ["DFIntSignalRCoreTimerMs"] = "750",
-        ["DFIntSignalRCoreRpcQueueSize"] = "256",
-        ["DFIntAnimationLodFacsVisibilityDenominator"] = "0",
-        ["DFIntAnimationLodFacsDistanceMin"] = "0",
-        ["DFIntAnimationLodFacsDistanceMax"] = "0",
-        ["DFIntDebugFRMQualityLevelOverride"] = "1",
-        ["DFIntDebugDynamicRenderKiloPixels"] = "1100",
-        ["DFIntDebugRestrictGCDistance"] = "1",
-        ["DFIntWaitOnUpdateNetworkLoopEndedMS"] = "100",
-        ["DFIntWaitOnRecvFromLoopEndedMS"] = "100",
-        ["FIntRenderMaxShadowAtlasUsageBeforeDownscale"] = "80",
-        ["FIntRenderShadowMapDepthCacheMemLimit"] = "192",
-        ["FIntUITextureMaxRenderTextureSize"] = "1024",
-        ["FIntRakNetResendBufferArrayLength"] = "128",
-        ["FIntTerrainOTAMaxTextureSize"] = "1024",
-        ["FIntOcclusionWorkerThreadCount"] = "5",
-        ["FIntDefaultMeshCacheSizeMB"] = "256",
-        ["FIntRobloxGuiBlurIntensity"] = "0",
-        ["FIntTerrainArraySliceSize"] = "0",
-        ["FIntDebugForceMSAASamples"] = "1",
-        ["FIntRenderShadowmapBias"] = "0",
-        ["FIntFRMMaxGrassDistance"] = "0",
-        ["FIntFRMMinGrassDistance"] = "0",
-        ["FIntGrassMovementReducedMotionFactor"] = "0",
-        ["FIntDebugTextureManagerSkipMips"] = "7",
-        ["FIntPerformanceTelemetryQueueProcessLimit"] = "0",
-        ["FIntTelemetryProfilerFrequency"] = "0",
-        ["FIntRenderLocalLightFadeInMs"] = "0",
-        ["FIntReportDeviceInfoRollout"] = "0",
-        ["FFlagRenderAllocateShadowMapResourcesOnDemand"] = "True",
-        ["FFlagSpecifyNetworkReplicatorScopeForItems"] = "True",
-        ["FFlagTaskSchedulerLimitTargetFpsTo2402"] = "False",
-        ["FFlagHandleAltEnterFullscreenManually"] = "False",
-        ["FFlagGameBasicSettingsFramerateCap5"] = "False",
-        ["FFlagSpecifyNetworkReplicatorScope"] = "True",
-        ["FFlagSendRenderFidelityTelemetry2"] = "False",
-        ["FFlagRenderGpuTextureCompressor"] = "True",
-        ["FFlagBaseThreadPoolUseRuntime2"] = "True",
-        ["FFlagCacheTextBoundsInGuiText"] = "True",
-        ["FFlagEnableTelemetryService1"] = "False",
-        ["FFlagDebugGraphicsPreferD3D11"] = "True",
-        ["FFlagPerfDataOnTelemetryV2"] = "False",
-        ["FFlagOpenTelemetryEnabled2"] = "False",
-        ["FFlagRbxStorageUseMemCache"] = "True",
-        ["FFlagDebugForceGenerateHSR"] = "True",
-        ["FFlagRenderInitShadowmaps"] = "True",
-        ["FFlagFastGPULightCulling3"] = "True",
-        ["FFlagDebugSkyGray"] = "True",
-        ["FFlagDebugRenderingSetDeterministic"] = "True",
-        ["FLogNetwork"] = "7"
-    }
-
-    local function formatFlag(z)
-        z = z:gsub("^DFInt", "")
-        z = z:gsub("^DFFlag", "")
-        z = z:gsub("^FFlag", "")
-        z = z:gsub("^FInt", "")
-        z = z:gsub("FString", "")
-        z = z:gsub("FLog", "")
-        return z
-    end
-
     local function applyCombatFFlags()
         if not (setfflag and getfflag) then return end
+        local function setFlag(name, value)
+            pcall(function()
+                local cleanName = name:gsub("^DFInt", ""):gsub("^DFFlag", ""):gsub("^FFlag", ""):gsub("^FInt", "")
+                if getfflag(cleanName) ~= nil then setfflag(cleanName, value)
+                elseif getfflag(name) ~= nil then setfflag(name, value) end
+            end)
+        end
+        local flags = {
+            DFIntTaskSchedulerTargetFps = "9999",
+            FIntTaskSchedulerAutoThreadLimit = "6",
+            FIntTaskSchedulerAsyncTasksMinimumThreadCount = "2",
+            FIntTaskSchedulerMaxNumOfJobs = "86",
+            FIntTaskSchedulerThreadMin = "1",
+            DFFlagBrowserTrackerIdTelemetryEnabled = "False",
+            DFFlagPreloadAsyncSupportTexturePack = "True",
+            DFFlagTextureQualityOverrideEnabled = "True",
+            DFFlagVideoCaptureServiceEnabled = "False",
+            DFFlagCoreScriptTelemetry2 = "False",
+            DFFlagEnableSoundPreloading = "True",
+            DFFlagOptimizePartsInPart = "True",
+            DFFlagDisableDPIScale = "True",
+            DFFlagDebugPerfMode = "True",
+            DFIntRaknetBandwidthInfluxHundredthsPercentageV2 = "10000",
+            DFIntDataSenderRate = "1000",
+            DFIntDataSenderMaxBandwidthBps = "2147483647",
+            DFIntDataSenderMaxJoinBandwidthBps = "2147483647",
+            DFIntS2PhysicsSenderRate = "1000",
+            DFIntS2NumPhysicsPacketsPerStep = "100",
+            DFIntPhysicsSenderMaxBandwidthBps = "2147483647",
+            DFIntPhysicsSenderMaxBandwidthBpsScaling = "1000",
+            DFIntConnectionMTUSize = "1260",
+            DFIntRakNetMtuValue1InBytes = "1280",
+            DFIntRakNetMtuValue2InBytes = "1240",
+            DFIntRakNetMtuValue3InBytes = "1200",
+            FIntRakNetResendBufferArrayLength = "128",
+            DFFlagRakNetUseSlidingWindow4 = "True",
+            DFIntLargePacketQueueSizeCutoffMB = "1000",
+            FIntPGSAngularDampingPermilPersecond = "0",
+            DFFlagPhysicsSkipNonRealTimeHumanoidForceCalc2 = "True",
+            DFIntAnimationLodFacsVisibilityDenominator = "0",
+            DFIntAnimationLodFacsDistanceMin = "0",
+            DFIntAnimationLodFacsDistanceMax = "0",
+            DFIntDebugFRMQualityLevelOverride = "1",
+            DFIntDebugDynamicRenderKiloPixels = "1100",
+            DFIntDebugRestrictGCDistance = "1",
+            FIntRenderMaxShadowAtlasUsageBeforeDownscale = "80",
+            FIntRenderShadowMapDepthCacheMemLimit = "192",
+            FIntUITextureMaxRenderTextureSize = "1024",
+            FIntTerrainOTAMaxTextureSize = "1024",
+            FIntOcclusionWorkerThreadCount = "5",
+            FIntDefaultMeshCacheSizeMB = "256",
+            FIntRobloxGuiBlurIntensity = "0",
+            FIntTerrainArraySliceSize = "0",
+            FIntDebugForceMSAASamples = "1",
+            FIntRenderShadowmapBias = "0",
+            FIntFRMMaxGrassDistance = "0",
+            FIntFRMMinGrassDistance = "0",
+            FIntGrassMovementReducedMotionFactor = "0",
+            FIntDebugTextureManagerSkipMips = "7",
+            FIntPerformanceTelemetryQueueProcessLimit = "0",
+            FIntTelemetryProfilerFrequency = "0",
+            FIntRenderLocalLightFadeInMs = "0",
+            FIntReportDeviceInfoRollout = "0",
+            FFlagRenderAllocateShadowMapResourcesOnDemand = "True",
+            FFlagTaskSchedulerLimitTargetFpsTo2402 = "False",
+            FFlagHandleAltEnterFullscreenManually = "False",
+            FFlagGameBasicSettingsFramerateCap5 = "False",
+            FFlagSendRenderFidelityTelemetry2 = "False",
+            FFlagRenderGpuTextureCompressor = "True",
+            FFlagBaseThreadPoolUseRuntime2 = "True",
+            FFlagCacheTextBoundsInGuiText = "True",
+            FFlagEnableTelemetryService1 = "False",
+            FFlagDebugGraphicsPreferD3D11 = "True",
+            FFlagPerfDataOnTelemetryV2 = "False",
+            FFlagOpenTelemetryEnabled2 = "False",
+            FFlagRbxStorageUseMemCache = "True",
+            FFlagDebugForceGenerateHSR = "True",
+            FFlagRenderInitShadowmaps = "True",
+            FFlagFastGPULightCulling3 = "True",
+            FFlagDebugSkyGray = "True",
+            FFlagDebugRenderingSetDeterministic = "True"
+        }
         task.spawn(function()
-            for k, v in pairs(flagtables) do
-                for i = 1, 3 do RunService.RenderStepped:Wait() end
-                pcall(function()
-                    local formatted = formatFlag(k)
-                    if getfflag(formatted) then
-                        setfflag(formatted, v)
-                    elseif getfflag(k) then
-                        setfflag(k, v)
-                    end
-                end)
-            end
+            for flag, value in pairs(flags) do setFlag(flag, value) end
             _G.MAMBO_FFLAGS_APPLIED = true
             _G.MAMBO_ANTILAG_LOCKED = true
         end)
     end
-
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(0, 340, 0, 140)
     frame.Position = UDim2.new(0.5, -170, 0.5, -70)
@@ -458,9 +375,18 @@ if not _G.MAMBO_FFLAGS_APPLIED then
     header.Position = UDim2.new(0, 8, 0, 8)
     header.BackgroundTransparency = 1
     header.Parent = frame
+    if logoImg then
+        local img = Instance.new("ImageLabel")
+        img.Size = UDim2.new(0, 36, 0, 36)
+        img.Position = UDim2.new(0, 0, 0.5, -18)
+        img.BackgroundTransparency = 1
+        img.Image = logoImg
+        img.ScaleType = Enum.ScaleType.Fit
+        img.Parent = header
+    end
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Size = UDim2.new(1, -48, 1, 0)
-    titleLabel.Position = UDim2.new(0, 8, 0, 0)
+    titleLabel.Position = UDim2.new(0, 44, 0, 0)
     titleLabel.BackgroundTransparency = 1
     titleLabel.Text = "[MAMBO PROJECT]"
     titleLabel.TextColor3 = Color3.fromRGB(0, 255, 200)
@@ -559,4 +485,4 @@ if not _G.MAMBO_FFLAGS_APPLIED then
         if answered then return end
         finish("Skipped FFlags.")
     end)
-end 
+end
