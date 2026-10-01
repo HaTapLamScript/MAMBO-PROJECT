@@ -9,7 +9,7 @@ if _G.MAMBO_ANTILAG_LOCKED then
     end)
     return
 end
-local ALLOWED_IDS = {10449761463, 131048399685555}
+local ALLOWED_IDS = {10449761463, 131048399685555, 15269951959}
 local valid = false
 for _, id in ipairs(ALLOWED_IDS) do
     if game.PlaceId == id then valid = true; break end
@@ -28,15 +28,13 @@ if not _G.MAMBO_ANTILAG_LOADED then
     _G.MAMBO_ANTILAG_LOADED = true
     local clk = os.clock
     local mround = math.round
-    local Players = game:GetService("Players")
     local RunService = game:GetService("RunService")
     local Lighting = game:GetService("Lighting")
     local Workspace = game:GetService("Workspace")
     local StarterGui = game:GetService("StarterGui")
     local Stats = game:GetService("Stats")
     local CoreGui = game:GetService("CoreGui")
-    local TweenService = game:GetService("TweenService")
-    local HttpService = game:GetService("HttpService")
+
     pcall(function() if makefolder then makefolder("MAMBO_PROJECT") end end)
     Lighting.GlobalShadows = false
     Lighting.EnvironmentDiffuseScale = 0
@@ -53,150 +51,273 @@ if not _G.MAMBO_ANTILAG_LOADED then
     for _, v in ipairs(Workspace:GetChildren()) do
         if v.Name:lower():find("cloud") then pcall(function() v:Destroy() end) end
     end
-    local WhitelistParts = {
-        Ring = true, Debris2g = true, Projectile = true, TornadoMain = true,
-        Spiral = true, MiddleSpin = true, MiddleSpinEmit = true
-    }
-    local WhitelistModels = {
-        Flash = true, Slash_Teleport = true, ShurikenProj = true, TParticles2 = true,
-        Proj = true, NadoSmoke = true, SmokeRing = true, Adjusted = true,
-        General = true, Up = true, Up2 = true, Go2 = true, Dotted = true,
-        Clone_Rig = true, Afterimage_Clone = true, Dragon = true, KingCrab = true,
-        Model = true, preload = true,
-        Trashcan = true,
-        Weboom = true
-    }
+
+    local currentFps = 60
     local EffectClasses = {
         ParticleEmitter = true, Trail = true, Beam = true,
         Smoke = true, Fire = true, PointLight = true,
         SpotLight = true, SurfaceLight = true
     }
-    local CRITICAL_SKILLS = {
-        ["Sky Ripping Fist"] = true,
-        SkyRippingFist = true,
-        ["Fourfold Flashstrike"] = true,
-        FourfoldFlashstrike = true
-    }
-    local criticalMode = false
-    local criticalEnd = 0
-    local queue = {}
-    local qHead = 1
-    local qTail = 0
-    local QueueSet = {}
-    local currentFps = 60
-    local lastCleanupTime = 0
-    local cleanupInterval = 3
-    local function activateCriticalMode()
-        criticalMode = true
-        criticalEnd = clk() + 6
-    end
-    local function checkForCriticalSkill(obj)
-        if not obj then return end
-        if CRITICAL_SKILLS[obj.Name] then
-            activateCriticalMode()
-            return
-        end
-        for _, child in ipairs(obj:GetChildren()) do
-            if CRITICAL_SKILLS[child.Name] then
-                activateCriticalMode()
-                return
-            end
-        end
-    end
-    Workspace.ChildAdded:Connect(checkForCriticalSkill)
-    Workspace.DescendantAdded:Connect(checkForCriticalSkill)
-    for _, obj in ipairs(Workspace:GetDescendants()) do
-        if CRITICAL_SKILLS[obj.Name] then
-            activateCriticalMode()
-            break
-        end
-    end
-    local function InstantDisable(child)
-        if not child then return end
-        local cClass = child.ClassName
-        if EffectClasses[cClass] then
-            pcall(function() child.Enabled = false end)
-        elseif (cClass == "Part" or cClass == "MeshPart") and not WhitelistParts[child.Name] and not (child.Name == "Part" and child.Size == Vector3.new(4,4,4)) then
-            pcall(function()
-                child.Transparency = 1
-                child.CastShadow = false
-                child.CanCollide = false
-            end)
-        end
-    end
-    local function QueueGarbage(child)
-        if not child or QueueSet[child] then return end
-        QueueSet[child] = true
-        InstantDisable(child)
-        for _, v in ipairs(child:GetChildren()) do InstantDisable(v) end
-        qTail = qTail + 1
-        queue[qTail] = child
-    end
-    RunService.Heartbeat:Connect(function()
-        if clk() >= criticalEnd then criticalMode = false end
-        if qHead > qTail then qHead = 1; qTail = 0; return end
-        if criticalMode then return end
-        local startTime = clk()
-        local timeLimit = 0.001
-        if currentFps >= 50 then timeLimit = 0.003
-        elseif currentFps >= 30 then timeLimit = 0.002 end
-        local processed = 0
-        while qHead <= qTail do
-            local child = queue[qHead]
-            queue[qHead] = nil
-            qHead = qHead + 1
-            if child then
-                QueueSet[child] = nil
-                if child.Parent then
-                    local cClass = child.ClassName
-                    if cClass == "Part" or cClass == "MeshPart" then
-                        if not WhitelistParts[child.Name] and not (child.Name == "Part" and child.Size == Vector3.new(4,4,4)) then
-                            pcall(function() child:Destroy() end)
-                        end
-                    elseif cClass == "Model" then
-                        if not WhitelistModels[child.Name] then
-                            pcall(function() child:Destroy() end)
-                        end
-                    elseif EffectClasses[cClass] then
+
+    if game.PlaceId == 15269951959 then
+        local queue = {}
+        local qHead = 1
+        local qTail = 0
+        local QueueSet = {}
+
+        RunService.Heartbeat:Connect(function()
+            if qHead > qTail then qHead = 1; qTail = 0; return end
+            local startTime = clk()
+            local timeLimit = 0.001
+            if currentFps >= 50 then timeLimit = 0.003
+            elseif currentFps >= 30 then timeLimit = 0.002 end
+            local processed = 0
+            while qHead <= qTail do
+                local child = queue[qHead]
+                queue[qHead] = nil
+                qHead = qHead + 1
+                if child then
+                    QueueSet[child] = nil
+                    if child.Parent then
                         pcall(function() child:Destroy() end)
                     end
                 end
+                processed = processed + 1
+                if clk() - startTime >= timeLimit or processed >= 10 then break end
             end
-            processed = processed + 1
-            if clk() - startTime >= timeLimit or processed >= 10 then break end
+        end)
+
+        local VFX = Workspace:FindFirstChild("VFX")
+        if not VFX then
+            VFX = Instance.new("Folder")
+            VFX.Name = "VFX"
+            VFX.Parent = Workspace
         end
-    end)
-    local Thing = Workspace:FindFirstChild("Thrown")
-    if not Thing then
-        Thing = Instance.new("Folder")
-        Thing.Name = "Thrown"
-        Thing.Parent = Workspace
-    end
-    for _, child in ipairs(Thing:GetChildren()) do QueueGarbage(child) end
-    Thing.ChildAdded:Connect(QueueGarbage)
-    task.spawn(function()
-        while true do
-            task.wait(cleanupInterval)
-            if currentFps > 25 and not criticalMode then
-                local now = clk()
-                if now - lastCleanupTime >= cleanupInterval then
-                    lastCleanupTime = now
+
+        local function IsRock(part)
+            local cls = part.ClassName
+            if cls ~= "Part" and cls ~= "MeshPart" then return false end
+            local n = part.Name
+            if n == "Tile" then return true end
+            if n:match("^Rock%d+$") then return true end
+            return false
+        end
+
+        local function NeutralizeRock(part)
+            pcall(function()
+                part.Transparency = 1
+                part.CastShadow = false
+                part.CanCollide = false
+                part.Anchored = true
+            end)
+        end
+
+        local function KillPE(pe)
+            if not pe or QueueSet[pe] then return end
+            QueueSet[pe] = true
+            pcall(function()
+                pe.Enabled = false
+                if pe.Rate * pe.Lifetime > 20 then
+                    pe:Clear()
+                end
+            end)
+            qTail = qTail + 1
+            queue[qTail] = pe
+        end
+
+        local function EnqueueRock(part)
+            if not part or QueueSet[part] then return end
+            QueueSet[part] = true
+            NeutralizeRock(part)
+            qTail = qTail + 1
+            queue[qTail] = part
+        end
+
+        VFX.DescendantAdded:Connect(function(desc)
+            local cls = desc.ClassName
+            if cls == "ParticleEmitter" then
+                KillPE(desc)
+            elseif IsRock(desc) then
+                EnqueueRock(desc)
+            end
+        end)
+
+        for _, desc in ipairs(VFX:GetDescendants()) do
+            local cls = desc.ClassName
+            if cls == "ParticleEmitter" then
+                KillPE(desc)
+            elseif IsRock(desc) then
+                EnqueueRock(desc)
+            end
+        end
+
+        task.spawn(function()
+            while true do
+                task.wait(3)
+                if currentFps > 25 then
                     pcall(function()
-                        local items = Workspace:GetDescendants()
-                        local count = 0
-                        for i = 1, #items do
-                            local v = items[i]
-                            if v and EffectClasses[v.ClassName] then
-                                pcall(function() v.Enabled = false; v:Destroy() end)
+                        for _, desc in ipairs(VFX:GetDescendants()) do
+                            local cls = desc.ClassName
+                            if cls == "ParticleEmitter" and not QueueSet[desc] then
+                                KillPE(desc)
+                            elseif IsRock(desc) and not QueueSet[desc] then
+                                EnqueueRock(desc)
                             end
-                            count = count + 1
-                            if count % 200 == 0 then RunService.Heartbeat:Wait() end
                         end
                     end)
                 end
             end
+        end)
+    else
+        local queue = {}
+        local qHead = 1
+        local qTail = 0
+        local QueueSet = {}
+
+        local WhitelistParts = {
+            Ring = true, Debris2g = true, Projectile = true, TornadoMain = true,
+            Spiral = true, MiddleSpin = true, MiddleSpinEmit = true
+        }
+        local WhitelistModels = {
+            Flash = true, Slash_Teleport = true, ShurikenProj = true, TParticles2 = true,
+            Proj = true, NadoSmoke = true, SmokeRing = true, Adjusted = true,
+            General = true, Up = true, Up2 = true, Go2 = true, Dotted = true,
+            Clone_Rig = true, Afterimage_Clone = true, Dragon = true, KingCrab = true,
+            Model = true, preload = true,
+            Trashcan = true,
+            Weboom = true
+        }
+        local CRITICAL_SKILLS = {
+            ["Sky Ripping Fist"] = true,
+            SkyRippingFist = true,
+            ["Fourfold Flashstrike"] = true,
+            FourfoldFlashstrike = true
+        }
+        local criticalMode = false
+        local criticalEnd = 0
+        local lastCleanupTime = 0
+        local cleanupInterval = 3
+
+        local function activateCriticalMode()
+            criticalMode = true
+            criticalEnd = clk() + 6
         end
-    end)
+
+        local function checkForCriticalSkill(obj)
+            if not obj then return end
+            if CRITICAL_SKILLS[obj.Name] then
+                activateCriticalMode()
+                return
+            end
+            for _, child in ipairs(obj:GetChildren()) do
+                if CRITICAL_SKILLS[child.Name] then
+                    activateCriticalMode()
+                    return
+                end
+            end
+        end
+
+        Workspace.ChildAdded:Connect(checkForCriticalSkill)
+        Workspace.DescendantAdded:Connect(checkForCriticalSkill)
+        for _, obj in ipairs(Workspace:GetDescendants()) do
+            if CRITICAL_SKILLS[obj.Name] then
+                activateCriticalMode()
+                break
+            end
+        end
+
+        local function InstantDisable(child)
+            if not child then return end
+            local cClass = child.ClassName
+            if EffectClasses[cClass] then
+                pcall(function() child.Enabled = false end)
+            elseif (cClass == "Part" or cClass == "MeshPart") and not WhitelistParts[child.Name] and not (child.Name == "Part" and child.Size == Vector3.new(4,4,4)) then
+                pcall(function()
+                    child.Transparency = 1
+                    child.CastShadow = false
+                    child.CanCollide = false
+                end)
+            end
+        end
+
+        local function QueueGarbage(child)
+            if not child or QueueSet[child] then return end
+            QueueSet[child] = true
+            InstantDisable(child)
+            for _, v in ipairs(child:GetChildren()) do InstantDisable(v) end
+            qTail = qTail + 1
+            queue[qTail] = child
+        end
+
+        RunService.Heartbeat:Connect(function()
+            if clk() >= criticalEnd then criticalMode = false end
+            if qHead > qTail then qHead = 1; qTail = 0; return end
+            if criticalMode then return end
+            local startTime = clk()
+            local timeLimit = 0.001
+            if currentFps >= 50 then timeLimit = 0.003
+            elseif currentFps >= 30 then timeLimit = 0.002 end
+            local processed = 0
+            while qHead <= qTail do
+                local child = queue[qHead]
+                queue[qHead] = nil
+                qHead = qHead + 1
+                if child then
+                    QueueSet[child] = nil
+                    if child.Parent then
+                        local cClass = child.ClassName
+                        if cClass == "Part" or cClass == "MeshPart" then
+                            if not WhitelistParts[child.Name] and not (child.Name == "Part" and child.Size == Vector3.new(4,4,4)) then
+                                pcall(function() child:Destroy() end)
+                            end
+                        elseif cClass == "Model" then
+                            if not WhitelistModels[child.Name] then
+                                pcall(function() child:Destroy() end)
+                            end
+                        elseif EffectClasses[cClass] then
+                            pcall(function() child:Destroy() end)
+                        end
+                    end
+                end
+                processed = processed + 1
+                if clk() - startTime >= timeLimit or processed >= 10 then break end
+            end
+        end)
+
+        local Thing = Workspace:FindFirstChild("Thrown")
+        if not Thing then
+            Thing = Instance.new("Folder")
+            Thing.Name = "Thrown"
+            Thing.Parent = Workspace
+        end
+        for _, child in ipairs(Thing:GetChildren()) do QueueGarbage(child) end
+        Thing.ChildAdded:Connect(QueueGarbage)
+
+        task.spawn(function()
+            while true do
+                task.wait(cleanupInterval)
+                if currentFps > 25 and not criticalMode then
+                    local now = clk()
+                    if now - lastCleanupTime >= cleanupInterval then
+                        lastCleanupTime = now
+                        pcall(function()
+                            local items = Workspace:GetDescendants()
+                            local count = 0
+                            for i = 1, #items do
+                                local v = items[i]
+                                if v and EffectClasses[v.ClassName] then
+                                    pcall(function() v.Enabled = false; v:Destroy() end)
+                                end
+                                count = count + 1
+                                if count % 200 == 0 then RunService.Heartbeat:Wait() end
+                            end
+                        end)
+                    end
+                end
+            end
+        end)
+    end
+
     local oldFpsGui = CoreGui:FindFirstChild("MamboFPSDisplay")
     if oldFpsGui then oldFpsGui:Destroy() end
     local fpsGui = Instance.new("ScreenGui")
