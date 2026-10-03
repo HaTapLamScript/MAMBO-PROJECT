@@ -59,18 +59,42 @@ if not _G.MAMBO_ANTILAG_LOADED then
         SpotLight = true, SurfaceLight = true
     }
 
+    local TIER_CFG = {
+        {t = 0.0010, c = 5},
+        {t = 0.0020, c = 12},
+        {t = 0.0035, c = 30},
+        {t = 0.0050, c = 70}
+    }
+    local TIER_UP = {150, 400, 900}
+    local TIER_DOWN = {90, 240, 540}
+
     if game.PlaceId == 15269951959 then
         local queue = {}
         local qHead = 1
         local qTail = 0
         local QueueSet = {}
+        local tier = 1
+
+        local function pickTier(qLen)
+            local want
+            if qLen >= TIER_UP[3] then want = 4
+            elseif qLen >= TIER_UP[2] then want = 3
+            elseif qLen >= TIER_UP[1] then want = 2
+            else want = 1 end
+            if want > tier then
+                tier = want
+            elseif want < tier then
+                if qLen < TIER_DOWN[tier - 1] then
+                    tier = tier - 1
+                end
+            end
+            return TIER_CFG[tier]
+        end
 
         RunService.Heartbeat:Connect(function()
-            if qHead > qTail then qHead = 1; qTail = 0; return end
+            if qHead > qTail then qHead = 1; qTail = 0; tier = 1; return end
+            local cfg = pickTier(qTail - qHead + 1)
             local startTime = clk()
-            local timeLimit = 0.001
-            if currentFps >= 50 then timeLimit = 0.003
-            elseif currentFps >= 30 then timeLimit = 0.002 end
             local processed = 0
             while qHead <= qTail do
                 local child = queue[qHead]
@@ -83,7 +107,7 @@ if not _G.MAMBO_ANTILAG_LOADED then
                     end
                 end
                 processed = processed + 1
-                if clk() - startTime >= timeLimit or processed >= 10 then break end
+                if clk() - startTime >= cfg.t or processed >= cfg.c then break end
             end
         end)
 
@@ -173,10 +197,13 @@ if not _G.MAMBO_ANTILAG_LOADED then
         local qHead = 1
         local qTail = 0
         local QueueSet = {}
+        local tier = 1
 
         local WhitelistParts = {
             Ring = true, Debris2g = true, Projectile = true, TornadoMain = true,
-            Spiral = true, MiddleSpin = true, MiddleSpinEmit = true
+            Spiral = true, MiddleSpin = true, MiddleSpinEmit = true,
+            Fist = true, Shock = true, End_Wind = true, Charge_Shock = true,
+            Woosh = true, WooshTwo = true, Wind = true, DebrisggbbTf = true
         }
         local WhitelistModels = {
             Flash = true, Slash_Teleport = true, ShurikenProj = true, TParticles2 = true,
@@ -185,7 +212,8 @@ if not _G.MAMBO_ANTILAG_LOADED then
             Clone_Rig = true, Afterimage_Clone = true, Dragon = true, KingCrab = true,
             Model = true, preload = true,
             Trashcan = true,
-            Weboom = true
+            Weboom = true,
+            OmniDebris = true
         }
         local CRITICAL_SKILLS = {
             ["Sky Ripping Fist"] = true,
@@ -226,6 +254,22 @@ if not _G.MAMBO_ANTILAG_LOADED then
             end
         end
 
+        local function pickTier(qLen)
+            local want
+            if qLen >= TIER_UP[3] then want = 4
+            elseif qLen >= TIER_UP[2] then want = 3
+            elseif qLen >= TIER_UP[1] then want = 2
+            else want = 1 end
+            if want > tier then
+                tier = want
+            elseif want < tier then
+                if qLen < TIER_DOWN[tier - 1] then
+                    tier = tier - 1
+                end
+            end
+            return TIER_CFG[tier]
+        end
+
         local function InstantDisable(child)
             if not child then return end
             local cClass = child.ClassName
@@ -251,12 +295,11 @@ if not _G.MAMBO_ANTILAG_LOADED then
 
         RunService.Heartbeat:Connect(function()
             if clk() >= criticalEnd then criticalMode = false end
-            if qHead > qTail then qHead = 1; qTail = 0; return end
+            if qHead > qTail then qHead = 1; qTail = 0; tier = 1; return end
             if criticalMode then return end
+
+            local cfg = pickTier(qTail - qHead + 1)
             local startTime = clk()
-            local timeLimit = 0.001
-            if currentFps >= 50 then timeLimit = 0.003
-            elseif currentFps >= 30 then timeLimit = 0.002 end
             local processed = 0
             while qHead <= qTail do
                 local child = queue[qHead]
@@ -280,7 +323,7 @@ if not _G.MAMBO_ANTILAG_LOADED then
                     end
                 end
                 processed = processed + 1
-                if clk() - startTime >= timeLimit or processed >= 10 then break end
+                if clk() - startTime >= cfg.t or processed >= cfg.c then break end
             end
         end)
 
